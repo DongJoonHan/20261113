@@ -50,6 +50,9 @@ ignore = [
     "D213",     # D212와 충돌
 ]
 
+[tool.ruff.lint.isort]
+known-first-party = ["pytest_report_viewer"]
+
 [tool.ruff.lint.mccabe]
 max-complexity = 10
 
