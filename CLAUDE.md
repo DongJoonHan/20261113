@@ -29,3 +29,16 @@ Pytest 수행 결과를 웹에서 보여주는 프로그램이다. 요구사항(
 - 테스트 커버리지는 Branch 커버리지 100%를 달성해야 한다.
 - 테스트는 Pytest 사용한다.
 - 정적분석은 Ruff 사용하고, 위반사항은 0개를 유지한다.
+
+## 디렉터리 / 명령
+
+- 소스는 `src/`, 테스트는 `tests/` (`test_*.py`)에 둔다. 도구 설정은 [pyproject.toml](pyproject.toml)에 있다.
+- 정적분석: `ruff check .` / `ruff format --check .` (순환복잡도 10 초과 시 C901로 실패)
+- 테스트: `pytest` (branch 커버리지 100% 미만이면 실패), 단일 테스트: `pytest tests/test_x.py::test_name`
+- Ruff로 강제되지 않는 규칙(함수 50라인, 주석 20%)은 리뷰 시 직접 확인한다.
+
+## 브랜치 / CI 정책
+
+- `main`에 직접 push 금지. 작업은 별도 브랜치에서 하고 PR로 병합한다.
+- PR과 `main` 병합 시 [.github/workflows/ci.yml](.github/workflows/ci.yml)이 Ruff 정적분석과 Pytest를 실행한다.
+- `Static Analysis (Ruff)`, `Test (Pytest)` 두 체크가 통과해야 병합할 수 있다.

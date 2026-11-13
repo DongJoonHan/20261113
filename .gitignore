@@ -1,2 +1,12 @@
 # Claude Code 개인 설정 (커밋하지 않음)
 .claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/

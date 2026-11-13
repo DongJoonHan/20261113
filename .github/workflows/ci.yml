@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Static Analysis (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "ruff>=0.6"
+      - name: Ruff lint
+        run: ruff check --output-format=github .
+      - name: Ruff format check
+        run: ruff format --check .
+
+  test:
+    name: Test (Pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pytest>=8" "pytest-cov>=5"
+      - name: Install requirements
+        shell: bash
+        run: if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Check for tests
+        id: has_tests
+        shell: bash
+        run: |
+          if compgen -G "tests/**/test_*.py" > /dev/null || compgen -G "tests/test_*.py" > /dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::tests/ 에 테스트가 아직 없어 Pytest를 건너뜁니다."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Pytest (branch coverage 100%)
+        if: steps.has_tests.outputs.found == 'true'
+        run: pytest
