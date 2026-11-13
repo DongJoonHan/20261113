@@ -43,3 +43,16 @@ Pytest 수행 결과를 웹에서 보여주는 프로그램이다. 요구사항(
 - `main`에 직접 push 금지. 작업은 별도 브랜치에서 하고 PR로 병합한다.
 - PR과 `main` 병합 시 [.github/workflows/ci.yml](.github/workflows/ci.yml)이 Ruff 정적분석과 Pytest를 실행한다.
 - `Static Analysis (Ruff)`, `Test (Pytest)` 두 체크가 통과해야 병합할 수 있다.
+
+## 테스트 케이스 (검증)
+
+- 시스템 테스트 케이스는 `tester` 서브에이전트([.claude/agents/tester.md](.claude/agents/tester.md))가 `system-test-cases` 스킬([.claude/skills/system-test-cases/SKILL.md](.claude/skills/system-test-cases/SKILL.md)) 규칙으로 생성한다.
+- 산출물: `docs/test-cases/system-test-cases.xlsx` (기능 / 비기능 / 추적성 시트)
+- 마일스톤을 마칠 때 해당 범위의 테스트 케이스를 갱신한다.
+
+## 커밋 / PR 규칙
+
+- 이슈 하나당 브랜치 하나: `feature/<이슈번호>-<설명>`, `chore/<이슈번호>-<설명>`
+- 커밋 제목에 이슈 번호: `test(#3): ...`, `feat(#3): ...`, 본문에 `Refs #N` (마지막 커밋은 `Closes #N`)
+- TDD 순서로 커밋: test(red) → feat(green) → refactor
+- PR은 merge commit으로 병합해 커밋별 이슈 추적을 유지한다
