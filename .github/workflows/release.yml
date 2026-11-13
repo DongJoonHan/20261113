@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write   # Release 생성, Wiki push
+  issues: read      # 해결된 이슈 제목 조회
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 이전 태그부터의 커밋 목록에 전체 이력 필요
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check version matches tag
+        run: |
+          VERSION=$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          if [ "v${VERSION}" != "${TAG}" ]; then
+            echo "::error::pyproject.toml 버전(v${VERSION})과 태그(${TAG})가 다릅니다."
+            exit 1
+          fi
+
+      - name: Quality gate (Ruff + Pytest)
+        run: |
+          pip install -e ".[dev]" build
+          ruff check .
+          ruff format --check .
+          pytest -q 2>&1 | tee pytest.log
+          grep -E "passed|failed|Total coverage" pytest.log > pytest-summary.txt
+
+      - name: Build packages and checksums
+        run: |
+          python -m build
+          cd dist
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Generate release notes
+        run: bash .github/scripts/release-notes.sh "${TAG}" pytest-summary.txt dist/SHA256SUMS.txt > release-notes.md
+
+      - name: Create GitHub Release
+        run: gh release create "${TAG}" dist/* --title "${TAG}" --notes-file release-notes.md
+
+      - name: Publish release notes to Wiki
+        run: |
+          WIKI_URL="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.wiki.git"
+          if ! git clone --depth 1 "${WIKI_URL}" wiki; then
+            echo "::error::Wiki 저장소가 없습니다. GitHub Wiki 탭에서 첫 페이지를 한 번 만들어 주세요."
+            exit 1
+          fi
+          cp release-notes.md "wiki/Release-Notes-${TAG}.md"
+          cd wiki
+          # 목록 페이지: 최신 버전을 맨 위에 추가한다.
+          ENTRY="- [[${TAG}|Release-Notes-${TAG}]] ($(date -u +%Y-%m-%d))"
+          { echo "# 릴리즈 노트"; echo; echo "${ENTRY}"; [ -f Release-Notes.md ] && tail -n +3 Release-Notes.md; } > index.tmp
+          mv index.tmp Release-Notes.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Release notes ${TAG}"
+          git push

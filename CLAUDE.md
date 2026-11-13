@@ -56,3 +56,13 @@ Pytest 수행 결과를 웹에서 보여주는 프로그램이다. 요구사항(
 - 커밋 제목에 이슈 번호: `test(#3): ...`, `feat(#3): ...`, 본문에 `Refs #N` (마지막 커밋은 `Closes #N`)
 - TDD 순서로 커밋: test(red) → feat(green) → refactor
 - PR은 merge commit으로 병합해 커밋별 이슈 추적을 유지한다
+
+## 릴리즈 절차
+
+마일스톤 하나를 마치면 릴리즈한다 (M1 → v0.1.0, M2 → v0.2.0, M3 → v1.0.0).
+
+1. `tester` 서브에이전트로 해당 범위의 시스템 테스트 케이스를 생성·실행한다. 결과는 `docs/test-cases/`(xlsx, summary.md)에 남는다. Fail이 있으면 이슈로 등록하고 수정 후 다시 실행한다.
+2. `pyproject.toml`의 version을 올리고, 1의 결과와 함께 PR로 병합한다.
+3. main에서 `vX.Y.Z` 태그를 push한다.
+4. [.github/workflows/release.yml](.github/workflows/release.yml)이 자동으로 빌드, SHA-256 체크섬, GitHub Release, Wiki 페이지(`Release-Notes-vX.Y.Z`, 목록 `Release-Notes`)를 만든다.
+5. 릴리즈 후 사용자에게 Release/Wiki 링크와 산출물 체크섬을 알린다.
