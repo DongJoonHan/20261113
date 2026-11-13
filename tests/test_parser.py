@@ -80,6 +80,19 @@ def test_single_testsuite_root():
     assert case.duration == pytest.approx(1.5)
 
 
+def test_ignores_non_outcome_children():
+    xml = """<testsuite>
+      <testcase classname="m" name="out_only"><system-out>log</system-out></testcase>
+      <testcase classname="m" name="out_then_fail">
+        <system-out>log</system-out><failure message="boom">tb</failure>
+      </testcase>
+    </testsuite>"""
+    out_only, out_then_fail = parse_junit_xml(xml)
+    assert out_only.status is Status.PASSED
+    assert out_then_fail.status is Status.FAILED
+    assert out_then_fail.message == "boom"
+
+
 def test_accepts_bytes():
     xml = b'<testsuite><testcase classname="m" name="t" /></testsuite>'
     assert len(parse_junit_xml(xml)) == 1
