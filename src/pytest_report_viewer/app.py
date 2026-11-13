@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 
 from pytest_report_viewer.api.routes import API_PREFIX
@@ -42,6 +43,7 @@ def create_app(
     # 도메인 예외를 HTTP 오류 응답으로 변환한다.
     app.add_exception_handler(RunNotFoundError, _not_found)
     app.add_exception_handler(ReportParseError, _unprocessable)
+    app.add_exception_handler(RequestValidationError, _invalid_request)
     return app
 
 
@@ -65,6 +67,20 @@ async def _unprocessable(_: Request, exc: Exception) -> JSONResponse:
     @return {"detail": 메시지} 422 응답.
     """
     return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+
+async def _invalid_request(_: Request, exc: Exception) -> JSONResponse:
+    """@brief 요청 파라미터 검증 오류 → 422.
+
+    @details FastAPI 기본 응답(detail이 객체 배열)을 #10 규정인
+    {"detail": "<위치>: <메시지>; ..."} 문자열 형식으로 바꾼다.
+    @param exc RequestValidationError.
+    @return {"detail": 메시지} 422 응답.
+    """
+    messages = [
+        f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" for error in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": "; ".join(messages)})
 
 
 ## uvicorn 진입점
