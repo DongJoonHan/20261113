@@ -20,6 +20,16 @@ def client(tmp_path) -> TestClient:
     return TestClient(create_app(results_dir=tmp_path, max_upload_bytes=LIMIT))
 
 
+def assert_error(res, status: int, *fragments: str) -> None:
+    """오류 응답이 {"detail": 문자열} 형식이고 fragments를 포함하는지 확인 (#10, #22)."""
+    assert res.status_code == status
+    body = res.json()
+    assert set(body) == {"detail"}
+    assert isinstance(body["detail"], str)
+    for fragment in fragments:
+        assert fragment in body["detail"]
+
+
 def upload(client: TestClient, content: bytes = XML, **form: str):
     """결과 파일 업로드 요청."""
     files = {"file": ("report.xml", content, "application/xml")}
@@ -54,7 +64,7 @@ def test_upload_invalid_report_returns_422(client, content):
 
 
 def test_upload_without_file_returns_422(client):
-    assert client.post(f"{API}/runs", data={"branch": "main"}).status_code == 422
+    assert_error(client.post(f"{API}/runs", data={"branch": "main"}), 422, "file")
 
 
 def test_upload_size_boundary(client):
@@ -84,7 +94,8 @@ def test_list_runs_newest_first_with_paging(client):
 
 @pytest.mark.parametrize("params", [{"limit": 0}, {"limit": 1001}, {"offset": -1}, {"limit": "x"}])
 def test_list_runs_invalid_paging_returns_422(client, params):
-    assert client.get(f"{API}/runs", params=params).status_code == 422
+    (name,) = params
+    assert_error(client.get(f"{API}/runs", params=params), 422, name)
 
 
 @pytest.mark.parametrize("params", [{"limit": 1}, {"limit": 1000}, {"offset": 0}])
@@ -152,7 +163,7 @@ def test_trend_without_limit_and_empty(client):
 
 @pytest.mark.parametrize("limit", [0, -1, "x"])
 def test_trend_invalid_limit_returns_422(client, limit):
-    assert client.get(f"{API}/trend", params={"limit": limit}).status_code == 422
+    assert_error(client.get(f"{API}/trend", params={"limit": limit}), 422, "limit")
 
 
 # ------------------------------------------------------------------ OpenAPI
