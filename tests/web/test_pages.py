@@ -53,7 +53,8 @@ def test_index_lists_runs_newest_first_with_links(client):
     first = upload(client, XML_MIXED, commit="c1")
     second = upload(client, XML_ALL_PASS, commit="c2")
     html = client.get("/").text
-    assert html.index(second) < html.index(first)
+    table = html[html.index("<table") :]  # 트렌드 JSON(차수 순)은 제외하고 표만 본다
+    assert table.index(second) < table.index(first)
     assert f'href="/runs/{first}"' in html
     assert "33.3%" in html  # 1 / (4 - 1 skipped)
     assert "100.0%" in html

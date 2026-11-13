@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}차수 #{{ run.seq }} - Pytest 결과{% endblock %}
+{% block content %}
+<h2>차수 #{{ run.seq }} <small>{{ run.run_id }}</small></h2>
+<p>등록 {{ run.created_at }}{% if run.meta.branch %} · 브랜치 <code>{{ run.meta.branch }}</code>{% endif %}{% if run.meta.commit %} · 커밋 <code>{{ run.meta.commit }}</code>{% endif %}</p>
+
+<div class="summary">
+  <div>전체<b>{{ run.summary.total }}</b></div>
+  <div class="status-passed">성공<b>{{ run.summary.passed }}</b></div>
+  <div class="status-failed">실패<b>{{ run.summary.failed }}</b></div>
+  <div class="status-error">에러<b>{{ run.summary.errors }}</b></div>
+  <div class="status-skipped">스킵<b>{{ run.summary.skipped }}</b></div>
+  <div>성공률<b>{{ "%.1f%%" | format(run.summary.pass_rate) }}</b></div>
+  <div>소요<b>{{ "%.2f" | format(run.summary.duration) }}s</b></div>
+</div>
+
+<table>
+  <thead>
+    <tr><th>테스트</th><th>결과</th><th class="num">소요(초)</th><th>메시지</th></tr>
+  </thead>
+  <tbody>
+    {% for case in cases %}
+    <tr>
+      <td><code>{{ case.nodeid }}</code></td>
+      <td><span class="status status-{{ case.status.value }}">{{ case.status.value }}</span></td>
+      <td class="num">{{ "%.3f" | format(case.duration) }}</td>
+      <td>{{ case.message }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
