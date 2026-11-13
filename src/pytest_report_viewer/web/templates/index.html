@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>트렌드</h2>
+<canvas id="trend-chart" height="90"></canvas>
+<script id="trend-data" type="application/json">{{ trend | tojson }}</script>
+
+<h2>차수 목록 ({{ total }})</h2>
+{% if runs %}
+<table>
+  <thead>
+    <tr>
+      <th>차수</th><th>등록 시각</th><th>커밋</th>
+      <th class="num">전체</th><th class="num">성공</th><th class="num">실패</th>
+      <th class="num">에러</th><th class="num">스킵</th><th class="num">성공률</th><th class="num">소요(초)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for run in runs %}
+    <tr>
+      <td><a href="/runs/{{ run.run_id }}">#{{ run.seq }}</a> <small>{{ run.run_id }}</small></td>
+      <td>{{ run.created_at }}</td>
+      <td><code>{{ run.meta.commit[:7] }}</code></td>
+      <td class="num">{{ run.summary.total }}</td>
+      <td class="num status-passed">{{ run.summary.passed }}</td>
+      <td class="num status-failed">{{ run.summary.failed }}</td>
+      <td class="num status-error">{{ run.summary.errors }}</td>
+      <td class="num status-skipped">{{ run.summary.skipped }}</td>
+      <td class="num">{{ "%.1f%%" | format(run.summary.pass_rate) }}</td>
+      <td class="num">{{ "%.2f" | format(run.summary.duration) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">등록된 차수가 없습니다. <code>POST /api/v1/runs</code>로 결과 파일을 등록하세요.</p>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  // 서버가 넣어 준 트렌드 데이터로 차트만 그린다 (집계 로직은 서버에 있음).
+  const points = JSON.parse(document.getElementById("trend-data").textContent);
+  if (points.length && window.Chart) {
+    new Chart(document.getElementById("trend-chart"), {
+      data: {
+        labels: points.map(p => "#" + p.seq),
+        datasets: [
+          { type: "bar", label: "성공", data: points.map(p => p.passed), backgroundColor: "#1a7f37", stack: "n", yAxisID: "count" },
+          { type: "bar", label: "실패", data: points.map(p => p.failed), backgroundColor: "#cf222e", stack: "n", yAxisID: "count" },
+          { type: "bar", label: "에러", data: points.map(p => p.errors), backgroundColor: "#9a6700", stack: "n", yAxisID: "count" },
+          { type: "bar", label: "스킵", data: points.map(p => p.skipped), backgroundColor: "#8c959f", stack: "n", yAxisID: "count" },
+          { type: "line", label: "성공률(%)", data: points.map(p => p.pass_rate), borderColor: "#0969da", yAxisID: "rate" }
+        ]
+      },
+      options: {
+        scales: {
+          count: { position: "left", stacked: true, beginAtZero: true, title: { display: true, text: "테스트 수" } },
+          rate: { position: "right", min: 0, max: 100, grid: { drawOnChartArea: false }, title: { display: true, text: "성공률(%)" } },
+          x: { stacked: true }
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

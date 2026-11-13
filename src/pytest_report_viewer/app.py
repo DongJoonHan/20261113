@@ -10,12 +10,15 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
+from pytest_report_viewer.api.routes import API_PREFIX
 from pytest_report_viewer.api.routes import router as api_router
 from pytest_report_viewer.parser import ReportParseError
 from pytest_report_viewer.service import ReportService
 from pytest_report_viewer.storage import RunNotFoundError, RunStore
+from pytest_report_viewer.web.routes import render_not_found
+from pytest_report_viewer.web.routes import router as web_router
 
 ## 업로드 파일 최대 크기 기본값 (10 MiB)
 DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -35,19 +38,24 @@ def create_app(
     app.state.service = ReportService(RunStore(root))
     app.state.max_upload_bytes = max_upload_bytes
     app.include_router(api_router)
+    app.include_router(web_router)
     # 도메인 예외를 HTTP 오류 응답으로 변환한다.
     app.add_exception_handler(RunNotFoundError, _not_found)
     app.add_exception_handler(ReportParseError, _unprocessable)
     return app
 
 
-async def _not_found(_: Request, exc: Exception) -> JSONResponse:
+async def _not_found(request: Request, exc: Exception) -> Response:
     """@brief RunNotFoundError → 404.
 
+    @details API 경로는 JSON, 웹 화면 경로는 HTML 404 화면으로 응답한다.
+    @param request 현재 요청.
     @param exc 발생한 예외.
-    @return {"detail": 메시지} 404 응답.
+    @return 404 응답.
     """
-    return JSONResponse(status_code=404, content={"detail": str(exc)})
+    if request.url.path.startswith(API_PREFIX):
+        return JSONResponse(status_code=404, content={"detail": str(exc)})
+    return render_not_found(request, str(exc))
 
 
 async def _unprocessable(_: Request, exc: Exception) -> JSONResponse:

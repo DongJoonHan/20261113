@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Pytest 결과{% endblock %}</title>
+  <style>
+    :root { --pass: #1a7f37; --fail: #cf222e; --error: #9a6700; --skip: #6e7781; --line: #d0d7de; }
+    body { font-family: system-ui, "Malgun Gothic", sans-serif; margin: 0 auto; max-width: 1100px; padding: 16px; color: #1f2328; }
+    header a { color: inherit; text-decoration: none; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #f6f8fa; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .status { font-weight: 600; }
+    .status-passed { color: var(--pass); }
+    .status-failed { color: var(--fail); }
+    .status-error { color: var(--error); }
+    .status-skipped { color: var(--skip); }
+    .summary { display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0; }
+    .summary div { border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; min-width: 90px; }
+    .summary b { display: block; font-size: 20px; }
+    pre { white-space: pre-wrap; margin: 4px 0 0; font-size: 12px; color: #57606a; }
+    .empty { color: #57606a; padding: 24px 0; }
+  </style>
+</head>
+<body>
+  <header><h1><a href="/">Pytest 결과</a></h1></header>
+  {% block content %}{% endblock %}
+</body>
+</html>
