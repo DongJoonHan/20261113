@@ -10,3 +10,6 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
+
+# 차수별 결과 데이터
+results/

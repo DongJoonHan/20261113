@@ -19,6 +19,7 @@ Pytest 수행 결과를 웹에서 보여주는 프로그램이다. 요구사항(
 
 - 사용자와의 대화 및 문서는 한국어를 기본으로 한다.
 - 요구사항이 바뀌면 README.md와 이 파일을 함께 갱신한다.
+- 개발 계획과 기술 스택은 [docs/development-plan.md](docs/development-plan.md)를 따른다.
 
 ## 소스코드 품질
 
